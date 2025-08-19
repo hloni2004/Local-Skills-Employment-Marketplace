@@ -1,6 +1,7 @@
 package za.ac.cput.domain;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -23,6 +24,9 @@ public class Admin {
     @Column(name = "actions_log", columnDefinition = "TEXT")
     protected String actionsLog;
 
+    @Column(name = "date_created")
+    protected LocalDateTime dateCreated;
+
     protected Admin() {}
 
     public Admin(Builder builder) {
@@ -30,6 +34,7 @@ public class Admin {
         this.user = builder.user;
         this.permissions = builder.permissions;
         this.actionsLog = builder.actionsLog;
+        this.dateCreated = builder.dateCreated;
     }
 
     // Getters
@@ -37,9 +42,12 @@ public class Admin {
     public User getUser() { return user; }
     public List<Permission> getPermissions() { return permissions; }
     public String getActionsLog() { return actionsLog; }
+    public LocalDateTime getDateCreated() { return dateCreated; }
 
-    // Enums
-    public enum Permission { MANAGE_USERS, VERIFY_SKILLS, RESOLVE_DISPUTES }
+    // Enum for Admin Permissions
+    public enum Permission {
+        MANAGE_USERS, VERIFY_SKILLS, RESOLVE_DISPUTES, MANAGE_PAYMENTS, VIEW_REPORTS
+    }
 
     @Override
     public String toString() {
@@ -48,6 +56,7 @@ public class Admin {
                 ", user=" + user.getUserId() +
                 ", permissions=" + permissions +
                 ", actionsLog='" + actionsLog + '\'' +
+                ", dateCreated=" + dateCreated +
                 '}';
     }
 
@@ -56,17 +65,20 @@ public class Admin {
         private User user;
         private List<Permission> permissions;
         private String actionsLog;
+        private LocalDateTime dateCreated;
 
         public Builder setAdminId(String adminId) { this.adminId = adminId; return this; }
         public Builder setUser(User user) { this.user = user; return this; }
         public Builder setPermissions(List<Permission> permissions) { this.permissions = permissions; return this; }
         public Builder setActionsLog(String actionsLog) { this.actionsLog = actionsLog; return this; }
+        public Builder setDateCreated(LocalDateTime dateCreated) { this.dateCreated = dateCreated; return this; }
 
         public Builder copy(Admin admin) {
             this.adminId = admin.adminId;
             this.user = admin.user;
             this.permissions = admin.permissions;
             this.actionsLog = admin.actionsLog;
+            this.dateCreated = admin.dateCreated;
             return this;
         }
 
