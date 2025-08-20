@@ -35,9 +35,15 @@ public class ContractFactory {
                 .setAgreedPay(agreedPay)
                 .setStatus(Contract.ContractStatus.ACTIVE)
                 .setTerms(terms)
-                .setPayments(Collections.emptyList()) // initialize empty list
-                .setReviews(Collections.emptyList())  // initialize empty list
+                .setPayments(Collections.emptyList())
+                .setReviews(Collections.emptyList())
                 .build();
+    }
+
+    // Fixed method signature to include terms parameter
+    public static Contract createContract(Job job, User client, User worker, LocalDateTime startDate,
+                                          LocalDateTime endDate, Double agreedPay) {
+        return createContract(job, client, worker, startDate, endDate, agreedPay, "Standard contract terms");
     }
 
     public static Contract createImmediateContract(Job job, User client, User worker, Double agreedPay, String terms) {

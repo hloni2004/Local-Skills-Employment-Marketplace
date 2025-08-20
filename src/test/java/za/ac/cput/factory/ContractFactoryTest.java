@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import za.ac.cput.domain.*;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,65 +13,18 @@ class ContractFactoryTest {
     private Job job;
     private User client;
     private User worker;
-    private WorkerProfile workerProfile;
 
     @BeforeEach
     void setUp() {
-        // Sample Job
-        job = new Job.Builder()
-                .setJobId("J101")
-                .setTitle("Backend Developer")
-                .setDescription("Develop REST API with Spring Boot")
-                .setBudget(8000.0)
-                .setPostedDate(LocalDateTime.now())
-                .setDeadline(LocalDateTime.now().plusDays(10))
-                .setStatus(Job.JobStatus.OPEN)
-                .setClient(null)
-                .setContracts(null)
-                .build();
+        // Create client user
+        client = UserFactory.createClientUser("Alice", "Mokoena", "alice@example.com", "Password123!");
 
-        // Sample Client
-        client = new User.Builder()
-                .setUserId("U201")
-                .setFirstName("Alice")
-                .setLastName("Mokoena")
-                .setEmail("alice@example.com")
-                .setPassword("password123")
-                .setRole(User.UserRole.CLIENT)
-                .setJobs(null)
-                .setContracts(null)
-                .setReviews(null)
-                .setVerifications(null)
-                .build();
+        // Create worker user
+        worker = UserFactory.createWorkerUser("Bob", "Smith", "bob@example.com", "Password123!", "0821234567");
 
-        // Sample Worker
-        worker = new User.Builder()
-                .setUserId("U202")
-                .setFirstName("Bob")
-                .setLastName("Smith")
-                .setEmail("bob@example.com")
-                .setPassword("secure456")
-                .setRole(User.UserRole.WORKER)
-                .setJobs(null)
-                .setContracts(null)
-                .setReviews(null)
-                .setVerifications(null)
-                .build();
-
-        // WorkerProfile for the worker
-        workerProfile = new WorkerProfile.Builder()
-                .setProfileId("P301")
-                .setUser(worker)
-                .setBio("Full-stack developer with 6 years experience")
-                .setSkills(Collections.emptyList())
-                .setExperience("6 years in full-stack development")
-                .setHourlyRate(500.0)
-                .setAvailabilityStatus(WorkerProfile.AvailabilityStatus.AVAILABLE)
-                .setLocation("Cape Town")
-                .setRating(4.8)
-                .setVerificationStatus(WorkerProfile.VerificationStatus.VERIFIED)
-                .setVerificationCode("VER123")
-                .build();
+        // Create job
+        job = JobFactory.createJob(client, "Backend Developer",
+                "Develop REST API with Spring Boot", "Programming", 8000.0, "Cape Town");
     }
 
     @Test
@@ -94,38 +46,72 @@ class ContractFactoryTest {
         assertNotNull(contract.getContractId());
         assertNotNull(contract.getPayments());
         assertNotNull(contract.getReviews());
+        assertEquals(startDate, contract.getStartDate());
+        assertEquals(endDate, contract.getEndDate());
+        System.out.println(contract);
     }
 
     @Test
-    void testCreateContractWithWorkerProfile() {
+    void testCreateContractWithoutEndDate() {
         LocalDateTime startDate = LocalDateTime.now();
 
         Contract contract = ContractFactory.createContract(
-                job, client, worker, startDate, null, 4000.0, "Profiled worker terms"
+                job, client, worker, startDate, null, 4000.0, "No end date terms"
         );
 
         assertNotNull(contract);
         assertEquals(worker, contract.getWorker());
         assertEquals("Bob", contract.getWorker().getFirstName());
-        assertEquals("Full-stack developer with 6 years experience", workerProfile.getBio());
-        assertEquals(WorkerProfile.AvailabilityStatus.AVAILABLE, workerProfile.getAvailabilityStatus());
+        assertNull(contract.getEndDate());
+        System.out.println(contract);
+    }
+
+    @Test
+    void testCreateContractWithNullJob() {
+        Contract contract = ContractFactory.createContract(
+                null, client, worker, LocalDateTime.now(), null, 2000.0, "Terms");
+        assertNull(contract);
+    }
+
+    @Test
+    void testCreateContractWithNullClient() {
+        Contract contract = ContractFactory.createContract(
+                job, null, worker, LocalDateTime.now(), null, 2000.0, "Terms");
+        assertNull(contract);
     }
 
     @Test
     void testCreateContractWithNullWorker() {
-        Contract contract = ContractFactory.createContract(job, client, null, LocalDateTime.now(), null, 2000.0, "Terms");
+        Contract contract = ContractFactory.createContract(
+                job, client, null, LocalDateTime.now(), null, 2000.0, "Terms");
         assertNull(contract);
     }
 
     @Test
     void testCreateContractWithInvalidPay() {
-        Contract contract = ContractFactory.createContract(job, client, worker, LocalDateTime.now(), null, -1000.0, "Terms");
+        Contract contract = ContractFactory.createContract(
+                job, client, worker, LocalDateTime.now(), null, -1000.0, "Terms");
+        assertNull(contract);
+
+        contract = ContractFactory.createContract(
+                job, client, worker, LocalDateTime.now(), null, 0.0, "Terms");
+        assertNull(contract);
+    }
+
+    @Test
+    void testCreateContractWithInvalidDates() {
+        LocalDateTime startDate = LocalDateTime.now();
+        LocalDateTime endDate = startDate.minusDays(1); // End before start
+
+        Contract contract = ContractFactory.createContract(
+                job, client, worker, startDate, endDate, 5000.0, "Terms");
         assertNull(contract);
     }
 
     @Test
     void testCreateImmediateContract() {
-        Contract contract = ContractFactory.createImmediateContract(job, client, worker, 2500.0, "Immediate terms");
+        Contract contract = ContractFactory.createImmediateContract(
+                job, client, worker, 2500.0, "Immediate terms");
 
         assertNotNull(contract);
         assertEquals(job, contract.getJob());
@@ -135,5 +121,6 @@ class ContractFactoryTest {
         assertEquals(Contract.ContractStatus.ACTIVE, contract.getStatus());
         assertNotNull(contract.getStartDate());
         assertNull(contract.getEndDate());
+        System.out.println(contract);
     }
 }

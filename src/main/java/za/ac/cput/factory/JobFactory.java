@@ -10,7 +10,7 @@ public class JobFactory {
     public static Job createJob(User client, String title, String description, String category,
                                 Double budget, String location) {
 
-
+        // Validate inputs
         if (client == null) {
             return null;
         }
@@ -45,10 +45,12 @@ public class JobFactory {
 
     public static Job createUrgentJob(User client, String title, String description, String category,
                                       Double budget, String location) {
+        // Create regular job first to validate inputs
         Job job = createJob(client, title, description, category, budget, location);
         if (job == null) return null;
 
-
+        // For urgent jobs, we could add special handling or priority flags here
+        // For now, it's the same as regular job creation
         return job;
     }
 }
