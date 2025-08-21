@@ -1,7 +1,6 @@
 package za.ac.cput.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import za.ac.cput.domain.User;
@@ -9,7 +8,6 @@ import za.ac.cput.repository.UserRepository;
 import za.ac.cput.factory.UserFactory;
 import za.ac.cput.util.ValidationHelper;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,12 +16,10 @@ import java.util.Optional;
 public class UserService implements IService<User, String> {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Autowired
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -37,14 +33,8 @@ public class UserService implements IService<User, String> {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        // Hash password before saving
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        User userToSave = new User.Builder()
-                .copy(user)
-                .setPassword(hashedPassword)
-                .build();
-
-        return userRepository.save(userToSave);
+        // Save password as-is for now (plain text)
+        return userRepository.save(user);
     }
 
     @Override
@@ -90,13 +80,13 @@ public class UserService implements IService<User, String> {
 
     public boolean authenticateUser(String email, String rawPassword) {
         Optional<User> user = findByEmail(email);
-        return user.isPresent() && passwordEncoder.matches(rawPassword, user.get().getPassword());
+        // Plain text check
+        return user.isPresent() && rawPassword.equals(user.get().getPassword());
     }
 
     public User switchMode(String userId, User.Mode newMode) {
         User user = read(userId);
 
-        // Validate user can switch to this mode
         if (!user.getRoles().contains(User.Role.BOTH) &&
                 !user.getRoles().contains(newMode == User.Mode.CLIENT ? User.Role.CLIENT : User.Role.WORKER)) {
             throw new IllegalArgumentException("User doesn't have permission for this mode");
